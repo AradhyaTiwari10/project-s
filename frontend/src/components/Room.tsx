@@ -152,6 +152,7 @@ export const Room = ({
             setRemoteMediaStream(stream);
             // trickle ice 
             setReceivingPc(pc);
+            // @ts-ignore
             window.pcr = pc;
             pc.ontrack = (e) => {
                 alert("ontrack");
