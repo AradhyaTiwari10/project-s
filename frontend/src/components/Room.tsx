@@ -258,6 +258,16 @@ export const Room = ({
             }
         })
 
+        socket.on("chat-message", ({ message, senderName }) => {
+            const newMessage: Message = {
+                text: message,
+                fromMe: false,
+                timestamp: formatTime(new Date()),
+                senderName: senderName || "Stranger"
+            };
+            setMessages(prev => [...prev, newMessage]);
+        });
+
         setSocket(socket)
     }, [name])
 
