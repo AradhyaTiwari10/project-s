@@ -97,18 +97,30 @@ export const Room = ({
             const pc = new RTCPeerConnection({
                 iceServers: [
                     {
-                        urls: "stun:stun.l.google.com:19302"
+                        urls: [
+                            "stun:stun.l.google.com:19302",
+                            "stun:stun1.l.google.com:19302",
+                            "stun:stun2.l.google.com:19302",
+                            "stun:stun3.l.google.com:19302",
+                            "stun:stun4.l.google.com:19302"
+                        ]
+                    },
+                    {
+                        urls: 'turn:numb.viagenie.ca',
+                        credential: 'muazkh',
+                        username: 'webrtc@live.com'
                     }
-                ]
+                ],
+                iceCandidatePoolSize: 10
             });
 
             setSendingPc(pc);
-            if (localVideoTrack) {
-                pc.addTrack(localVideoTrack);
-            }
-            if (localAudioTrack) {
-                pc.addTrack(localAudioTrack);
-            }
+
+            // Create and send media stream
+            const stream = new MediaStream();
+            if (localVideoTrack) stream.addTrack(localVideoTrack);
+            if (localAudioTrack) stream.addTrack(localAudioTrack);
+            stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
             // Send name immediately
             socket.emit("chat-message", { 
@@ -118,22 +130,26 @@ export const Room = ({
 
             pc.onicecandidate = async (e) => {
                 if (e.candidate) {
-                   socket.emit("add-ice-candidate", {
-                    candidate: e.candidate,
-                    type: "sender",
-                    roomId
-                   });
+                    socket.emit("add-ice-candidate", {
+                        candidate: e.candidate,
+                        type: "sender",
+                        roomId
+                    });
                 }
-            }
+            };
 
             pc.onnegotiationneeded = async () => {
-                const sdp = await pc.createOffer();
-                await pc.setLocalDescription(sdp);
-                socket.emit("offer", {
-                    sdp,
-                    roomId
-                });
-            }
+                try {
+                    const sdp = await pc.createOffer();
+                    await pc.setLocalDescription(sdp);
+                    socket.emit("offer", {
+                        sdp,
+                        roomId
+                    });
+                } catch (err) {
+                    console.error("Error during negotiation:", err);
+                }
+            };
         });
 
         socket.on("offer", async ({roomId, sdp: remoteSdp}) => {
@@ -141,9 +157,21 @@ export const Room = ({
             const pc = new RTCPeerConnection({
                 iceServers: [
                     {
-                        urls: "stun:stun.l.google.com:19302"
+                        urls: [
+                            "stun:stun.l.google.com:19302",
+                            "stun:stun1.l.google.com:19302",
+                            "stun:stun2.l.google.com:19302",
+                            "stun:stun3.l.google.com:19302",
+                            "stun:stun4.l.google.com:19302"
+                        ]
+                    },
+                    {
+                        urls: 'turn:numb.viagenie.ca',
+                        credential: 'muazkh',
+                        username: 'webrtc@live.com'
                     }
-                ]
+                ],
+                iceCandidatePoolSize: 10
             });
 
             // Send name immediately
@@ -158,32 +186,39 @@ export const Room = ({
                 }
             };
 
-            await pc.setRemoteDescription(remoteSdp);
-            const sdp = await pc.createAnswer();
-            await pc.setLocalDescription(sdp);
+            try {
+                await pc.setRemoteDescription(remoteSdp);
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                setReceivingPc(pc);
 
-            setReceivingPc(pc);
+                socket.emit("answer", {
+                    roomId,
+                    sdp: answer
+                });
+            } catch (err) {
+                console.error("Error during offer handling:", err);
+            }
 
             pc.onicecandidate = async (e) => {
                 if (e.candidate) {
-                   socket.emit("add-ice-candidate", {
-                    candidate: e.candidate,
-                    type: "receiver",
-                    roomId
-                   });
+                    socket.emit("add-ice-candidate", {
+                        candidate: e.candidate,
+                        type: "receiver",
+                        roomId
+                    });
                 }
-            }
-
-            socket.emit("answer", {
-                roomId,
-                sdp: sdp
-            });
+            };
         });
 
         socket.on("answer", async ({sdp: remoteSdp}) => {
             setLobby(false);
-            if (sendingPc) {
-                await sendingPc.setRemoteDescription(remoteSdp);
+            try {
+                if (sendingPc) {
+                    await sendingPc.setRemoteDescription(remoteSdp);
+                }
+            } catch (err) {
+                console.error("Error setting remote description:", err);
             }
         });
 
@@ -224,6 +259,10 @@ export const Room = ({
         });
 
         setSocket(socket);
+
+        return () => {
+            socket.disconnect();
+        };
     }, [name]);
 
     useEffect(() => {
