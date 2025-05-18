@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Socket, io } from "socket.io-client";
 
 const URL = "https://project-s-production.up.railway.app/";
+// const URL = "http://localhost:3000/";
+
 
 interface Message {
     text: string;
@@ -98,7 +100,27 @@ export const Room = ({
         socket.on('send-offer', async ({roomId}) => {
             console.log("sending offer");
             setLobby(false);
-            const pc = new RTCPeerConnection();
+            const pc = new RTCPeerConnection({
+                iceServers: [
+                  { urls: "stun:stun.l.google.com:19302" }, // Free public STUN server
+                  {
+                    urls: "turn:relay.metered.ca:80",
+                    username: "openai",
+                    credential: "openai"
+                  },
+                  {
+                    urls: "turn:relay.metered.ca:443",
+                    username: "openai",
+                    credential: "openai"
+                  },
+                  {
+                    urls: "turn:relay.metered.ca:443?transport=tcp",
+                    username: "openai",
+                    credential: "openai"
+                  }
+                ]
+              });
+              
 
             setSendingPc(pc);
             if (localVideoTrack) {
@@ -144,7 +166,27 @@ export const Room = ({
         socket.on("offer", async ({roomId, sdp: remoteSdp}) => {
             console.log("received offer");
             setLobby(false);
-            const pc = new RTCPeerConnection();
+            const pc = new RTCPeerConnection({
+                iceServers: [
+                  { urls: "stun:stun.l.google.com:19302" }, // Free public STUN server
+                  {
+                    urls: "turn:relay.metered.ca:80",
+                    username: "openai",
+                    credential: "openai"
+                  },
+                  {
+                    urls: "turn:relay.metered.ca:443",
+                    username: "openai",
+                    credential: "openai"
+                  },
+                  {
+                    urls: "turn:relay.metered.ca:443?transport=tcp",
+                    username: "openai",
+                    credential: "openai"
+                  }
+                ]
+              });
+              
             pc.setRemoteDescription(remoteSdp)
             const sdp = await pc.createAnswer();
             //@ts-ignore
