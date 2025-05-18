@@ -112,6 +112,12 @@ export const Room = ({
                 pc.addTrack(localAudioTrack)
             }
 
+            // Send our name immediately when connection starts
+            socket.emit("chat-message", { 
+                message: "", 
+                senderName: name 
+            });
+
             pc.onicecandidate = async (e) => {
                 console.log("receiving ice candidate locally");
                 if (e.candidate) {
@@ -147,6 +153,12 @@ export const Room = ({
             if (remoteVideoRef.current) {
                 remoteVideoRef.current.srcObject = stream;
             }
+
+            // Send our name immediately when connection starts
+            socket.emit("chat-message", { 
+                message: "", 
+                senderName: name 
+            });
 
             setRemoteMediaStream(stream);
             setReceivingPc(pc);
@@ -234,14 +246,18 @@ export const Room = ({
         })
 
         socket.on("chat-message", ({ message, senderName }) => {
-            setStrangerName(senderName || "Stranger");
-            const newMessage: Message = {
-                text: message,
-                fromMe: false,
-                timestamp: formatTime(new Date()),
-                senderName: senderName || "Stranger"
-            };
-            setMessages(prev => [...prev, newMessage]);
+            if (senderName) {
+                setStrangerName(senderName);
+            }
+            if (message) {
+                const newMessage: Message = {
+                    text: message,
+                    fromMe: false,
+                    timestamp: formatTime(new Date()),
+                    senderName: senderName || "Stranger"
+                };
+                setMessages(prev => [...prev, newMessage]);
+            }
         });
 
         socket.on("user-disconnected", () => {
