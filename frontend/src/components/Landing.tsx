@@ -31,11 +31,11 @@ export const Landing = () => {
 
     if (!joined) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-100">
-                <div className="bg-white p-8 rounded-lg shadow-md">
+            <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-100">
+                <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-[400px]">
                     <h1 className="text-2xl font-bold mb-4">Join Random Chat</h1>
                     <div className="mb-4">
-                        <video autoPlay ref={videoRef} className="w-[400px] h-[300px] rounded-lg"></video>
+                        <video autoPlay ref={videoRef} className="w-full h-[300px] rounded-lg object-cover"></video>
                     </div>
                     <div className="flex flex-col gap-2">
                         <input 

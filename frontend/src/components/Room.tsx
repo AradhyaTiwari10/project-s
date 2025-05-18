@@ -27,14 +27,13 @@ export const Room = ({
     const [receivingPc, setReceivingPc] = useState<null | RTCPeerConnection>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState("");
-    const [strangerName, setStrangerName] = useState<string>("Stranger");
+    const [strangerName, setStrangerName] = useState<string>("Connecting...");
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const localVideoRef = useRef<HTMLVideoElement>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const [remoteVideoTrack, setRemoteVideoTrack] = useState<MediaStreamTrack | null>(null);
     const [remoteAudioTrack, setRemoteAudioTrack] = useState<MediaStreamTrack | null>(null);
     const [remoteMediaStream, setRemoteMediaStream] = useState<MediaStream | null>(null);
-
 
     useEffect(() => {
         if (chatContainerRef.current) {
@@ -63,7 +62,7 @@ export const Room = ({
         }
         setLobby(true);
         setMessages([]);
-        setStrangerName("Stranger");
+        setStrangerName("Connecting...");
     };
 
     const handleNext = () => {
@@ -150,25 +149,11 @@ export const Room = ({
             }
 
             setRemoteMediaStream(stream);
-            // trickle ice 
             setReceivingPc(pc);
             // @ts-ignore
             window.pcr = pc;
             pc.ontrack = (e) => {
                 alert("ontrack");
-                // console.error("inside ontrack");
-                // const {track, type} = e;
-                // if (type == 'audio') {
-                //     // setRemoteAudioTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // } else {
-                //     // setRemoteVideoTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // }
-                // //@ts-ignore
-                // remoteVideoRef.current.play();
             }
 
             pc.onicecandidate = async (e) => {
@@ -206,16 +191,6 @@ export const Room = ({
                 remoteVideoRef.current.srcObject.addTrack(track2)
                 //@ts-ignore
                 remoteVideoRef.current.play();
-                // if (type == 'audio') {
-                //     // setRemoteAudioTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // } else {
-                //     // setRemoteVideoTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // }
-                // //@ts-ignore
             }, 5000)
         });
 
@@ -230,6 +205,7 @@ export const Room = ({
 
         socket.on("lobby", () => {
             setLobby(true);
+            setStrangerName("Connecting...");
         })
 
         socket.on("add-ice-candidate", ({candidate, type}) => {
@@ -250,7 +226,6 @@ export const Room = ({
                     if (!pc) {
                         console.error("sending pc nout found")
                     } else {
-                        // console.error(pc.ontrack)
                     }
                     pc?.addIceCandidate(candidate)
                     return pc;
@@ -259,6 +234,7 @@ export const Room = ({
         })
 
         socket.on("chat-message", ({ message, senderName }) => {
+            setStrangerName(senderName || "Stranger");
             const newMessage: Message = {
                 text: message,
                 fromMe: false,
@@ -266,6 +242,10 @@ export const Room = ({
                 senderName: senderName || "Stranger"
             };
             setMessages(prev => [...prev, newMessage]);
+        });
+
+        socket.on("user-disconnected", () => {
+            handleNext();
         });
 
         setSocket(socket)
@@ -280,39 +260,35 @@ export const Room = ({
         }
     }, [localVideoRef])
 
-
-
-
-
     return (
         <div className="flex flex-col items-center gap-4 p-4 bg-gray-100 min-h-screen">
-            <div className="flex gap-4">
-                <div className="relative">
+            <div className="flex flex-col md:flex-row gap-4 w-full max-w-[824px]">
+                <div className="relative w-full md:w-1/2">
                     <video 
                         autoPlay 
                         playsInline
                         muted
                         ref={localVideoRef}
-                        className="w-[400px] h-[300px] rounded-lg bg-black object-cover"
+                        className="w-full h-[300px] rounded-lg bg-black object-cover"
                     />
                     <p className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded">
                         You ({name})
                     </p>
                 </div>
-                <div className="relative">
+                <div className="relative w-full md:w-1/2">
                     <video 
                         autoPlay 
                         playsInline
                         ref={remoteVideoRef}
-                        className="w-[400px] h-[300px] rounded-lg bg-black object-cover"
+                        className="w-full h-[300px] rounded-lg bg-black object-cover"
                     />
                     <p className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded">
-                        {lobby ? "Connecting..." : strangerName}
+                        {strangerName}
                     </p>
                 </div>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full max-w-[824px] justify-center">
                 <button 
                     onClick={handleNext}
                     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
@@ -327,7 +303,7 @@ export const Room = ({
                 </button>
             </div>
 
-            <div className="w-[824px] bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="w-full max-w-[824px] bg-white rounded-lg shadow-md overflow-hidden">
                 <div className="p-4 border-b">
                     <h2 className="text-lg font-semibold">Chat</h2>
                 </div>
@@ -365,7 +341,7 @@ export const Room = ({
                         />
                         <button 
                             onClick={sendMessage}
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition whitespace-nowrap"
                         >
                             Send
                         </button>
