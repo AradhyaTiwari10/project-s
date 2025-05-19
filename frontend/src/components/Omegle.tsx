@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Room } from "./Room";
-import { SignedIn, SignedOut, useAuth, useUser } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, useAuth, useUser, useClerk } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 
 export const Omegle = () => {
@@ -11,6 +11,7 @@ export const Omegle = () => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const { isSignedIn } = useAuth();
     const { user } = useUser();
+    const { signOut } = useClerk();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -21,11 +22,11 @@ export const Omegle = () => {
 
         const email = user.primaryEmailAddress?.emailAddress;
         if (!email || !email.endsWith('.rishihood.edu.in')) {
-            user.signOut();
+            signOut();
             navigate('/');
             return;
         }
-    }, [isSignedIn, user, navigate]);
+    }, [isSignedIn, user, navigate, signOut]);
 
     const getCam = async () => {
         const stream = await window.navigator.mediaDevices.getUserMedia({
