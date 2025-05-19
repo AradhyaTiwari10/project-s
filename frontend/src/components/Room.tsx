@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Socket, io } from "socket.io-client";
 
-const URL = "https://project-s-production.up.railway.app/";
-// const URL = "http://localhost:3000/";
+// const URL = "https://project-s-production.up.railway.app/";
+const URL = "http://localhost:3000/";
 
 
 interface Message {
