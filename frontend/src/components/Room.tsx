@@ -50,7 +50,7 @@ export const Room = ({
         });
     };
 
-    const cleanupPeerConnections = () => {
+    const cleanupPeerConnections = async () => {
         if (sendingPc) {
             sendingPc.close();
             setSendingPc(null);
@@ -67,18 +67,18 @@ export const Room = ({
         setStrangerName("Connecting...");
     };
 
-    const handleNext = () => {
-        cleanupPeerConnections();
+    const handleNext = async () => {
+        await cleanupPeerConnections();
         socket?.emit("next-user");
     };
 
-    const handleExit = () => {
-        cleanupPeerConnections();
+    const handleExit = async () => {
+        await cleanupPeerConnections();
         socket?.disconnect();
         onExit();
     };
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
         if (inputMessage.trim() && socket) {
             const newMessage: Message = {
                 text: inputMessage,
@@ -187,10 +187,10 @@ export const Room = ({
                 ]
               });
               
-            pc.setRemoteDescription(remoteSdp)
+            await pc.setRemoteDescription(remoteSdp)
             const sdp = await pc.createAnswer();
             //@ts-ignore
-            pc.setLocalDescription(sdp)
+            await pc.setLocalDescription(sdp)
             const stream = new MediaStream();
             if (remoteVideoRef.current) {
                 remoteVideoRef.current.srcObject = stream;
@@ -228,8 +228,8 @@ export const Room = ({
                 roomId,
                 sdp: sdp
             });
-            setTimeout(() => {
-                const track1 = pc.getTransceivers()[0].receiver.track
+            setTimeout( () => {
+                const track1 =   pc.getTransceivers()[0].receiver.track
                 const track2 = pc.getTransceivers()[1].receiver.track
                 console.log(track1);
                 if (track1.kind === "video") {
