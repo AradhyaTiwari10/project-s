@@ -45,7 +45,7 @@ const Landing = () => {
                         <div className="h-[80rem] absolute left-0 top-0 w-56 -rotate-45 rounded-full bg-[radial-gradient(50%_50%_at_50%_50%,hsla(0,0%,85%,.06)_0,hsla(0,0%,45%,.02)_80%,transparent_100%)] [translate:5%_-50%]" />
                     </div>
                     
-                    {/* Main content */}
+                    {/* Main content with gradient background */}
                     <div className="relative bg-gradient-to-b from-blue-50/80 to-white/90 pt-24 pb-64 px-4 min-h-[100vh] flex flex-col justify-center">
                         <div aria-hidden className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--background)_75%)]" />
                         
@@ -62,7 +62,8 @@ const Landing = () => {
                             />
                         </div>
                         
-                        <div className="container mx-auto max-w-4xl text-center relative z-10">
+                        {/* Content container */}
+                        <div className="container mx-auto max-w-4xl text-center relative z-10 pt-32">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
