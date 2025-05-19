@@ -1,4 +1,11 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, CSSProperties } from "react";
+
+// Extend CSSProperties to include the custom CSS variable
+declare module 'react' {
+  interface CSSProperties {
+    '--rotate'?: string;
+  }
+}
 
 function MagnetLines({
   rows = 9,
