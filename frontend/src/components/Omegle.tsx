@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Room } from "./Room";
-import { SignedIn, SignedOut, useAuth, useUser, useClerk } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, useAuth, useUser, useClerk, UserButton } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 
 export const Omegle = () => {
@@ -53,6 +53,9 @@ export const Omegle = () => {
         return (
             <SignedIn>
                 <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-100">
+                    <div className="absolute top-4 right-4">
+                        <UserButton afterSignOutUrl="/" />
+                    </div>
                     <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-[400px]">
                         <h1 className="text-2xl font-bold mb-4">Join Random Chat</h1>
                         <div className="mb-4">
@@ -81,6 +84,9 @@ export const Omegle = () => {
 
     return (
         <SignedIn>
+            <div className="absolute top-4 right-4 z-50">
+                <UserButton afterSignOutUrl="/" />
+            </div>
             <Room 
                 name={name} 
                 localAudioTrack={localAudioTrack} 
