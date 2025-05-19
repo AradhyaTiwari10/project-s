@@ -8,7 +8,7 @@ import { Loading } from './components/Loading';
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <Routes >
         <Route path="/" element={<Landing />} />
         <Route path="/omegle" element={<Omegle />} />
         <Route path="/caught" element={<Caught />} />
