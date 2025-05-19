@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Landing } from './components/Landing';
 import { Omegle } from './components/Omegle';
 import { Caught } from './components/Caught';
-import { NotFound } from './404';
+import  NotFound  from './404';
 import { Loading } from './components/Loading';
 
 function App() {
