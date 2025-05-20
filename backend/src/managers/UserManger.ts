@@ -50,6 +50,13 @@ export class UserManager {
             return;
         }
 
+        if (user1.socket.id === user2.socket.id) {
+            if (id1) {
+                this.queue.push(id1);
+            }
+            return;
+        }
+
         const room = this.roomManager.createRoom(user1, user2);
         this.clearQueue();
     }
