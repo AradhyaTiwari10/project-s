@@ -1,6 +1,6 @@
 import { Navbar1 } from "./ui/navbar-1"
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Copyright } from "lucide-react";
 
 const About = () => {
   return (
@@ -11,8 +11,8 @@ const About = () => {
       </header>
 
       {/* Main content */}
-      <main className="flex-grow pt-24 px-4">
-        <div className="container mx-auto max-w-4xl">
+      <main className="flex-grow pt-0 px-4">
+        <div className="container mx-auto max-w-4xl pt-48 pb-16">
           <h1 className="text-4xl font-bold text-gray-800 mb-8">About Omegle Uni Edition</h1>
           
           <div className="prose prose-lg">
@@ -46,6 +46,16 @@ const About = () => {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="w-full bg-gray-50 py-8 border-t border-gray-100">
+          <div className="container mx-auto px-4 flex justify-center items-center">
+              <div className="flex items-center text-gray-500 text-sm group hover:text-gray-700 transition-colors">
+                  <Copyright size={14} className="mr-2 group-hover:text-blue-500 transition-colors" />
+                  <span>{new Date().getFullYear()} Omegle University Chat. All rights reserved.</span>
+              </div>
+          </div>
+      </footer>
     </div>
   )
 }
