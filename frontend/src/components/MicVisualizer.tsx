@@ -5,6 +5,70 @@ interface MicVisualizerProps {
   className?: string;
 }
 
+class AudioVisualizer {
+  private audioContext: AudioContext;
+  private analyser: AnalyserNode | null = null;
+  private processFrame: (data: Uint8Array) => void;
+  private processError: () => void;
+  private stream: MediaStream | null = null;
+
+  constructor(audioContext: AudioContext, processFrame: (data: Uint8Array) => void, processError: () => void) {
+    this.audioContext = audioContext;
+    this.processFrame = processFrame;
+    this.processError = processError;
+    this.connectStream = this.connectStream.bind(this);
+    
+    this.initializeAudio();
+  }
+
+  private async initializeAudio() {
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: true,
+        video: false 
+      });
+      this.connectStream(this.stream);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      this.processError();
+    }
+  }
+
+  private connectStream(stream: MediaStream) {
+    this.analyser = this.audioContext.createAnalyser();
+    const source = this.audioContext.createMediaStreamSource(stream);
+    source.connect(this.analyser);
+    this.analyser.smoothingTimeConstant = 0.5;
+    this.analyser.fftSize = 32;
+
+    this.initRenderLoop();
+  }
+
+  private initRenderLoop() {
+    if (!this.analyser) return;
+    
+    const frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
+
+    const renderFrame = () => {
+      if (!this.analyser) return;
+      this.analyser.getByteFrequencyData(frequencyData);
+      this.processFrame(frequencyData);
+      requestAnimationFrame(renderFrame);
+    };
+    
+    requestAnimationFrame(renderFrame);
+  }
+
+  public cleanup() {
+    if (this.stream) {
+      this.stream.getTracks().forEach(track => track.stop());
+    }
+    if (this.analyser) {
+      this.analyser.disconnect();
+    }
+  }
+}
+
 const MicVisualizer: React.FC<MicVisualizerProps> = ({ className }) => {
   const mainRef = useRef<HTMLElement>(null);
   const visualElementsRef = useRef<HTMLDivElement[]>([]);
@@ -47,70 +111,6 @@ const MicVisualizer: React.FC<MicVisualizerProps> = ({ className }) => {
           mainRef.current.classList.add(styles.error);
           mainRef.current.innerText = 'Please allow access to your microphone to see the visualization.';
         };
-
-        class AudioVisualizer {
-          private audioContext: AudioContext;
-          private analyser: AnalyserNode | null = null;
-          private processFrame: (data: Uint8Array) => void;
-          private processError: () => void;
-          private stream: MediaStream | null = null;
-
-          constructor(audioContext: AudioContext, processFrame: (data: Uint8Array) => void, processError: () => void) {
-            this.audioContext = audioContext;
-            this.processFrame = processFrame;
-            this.processError = processError;
-            this.connectStream = this.connectStream.bind(this);
-            
-            this.initializeAudio();
-          }
-
-          private async initializeAudio() {
-            try {
-              this.stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: true,
-                video: false 
-              });
-              this.connectStream(this.stream);
-            } catch (error) {
-              console.error("Error accessing microphone:", error);
-              this.processError();
-            }
-          }
-
-          private connectStream(stream: MediaStream) {
-            this.analyser = this.audioContext.createAnalyser();
-            const source = this.audioContext.createMediaStreamSource(stream);
-            source.connect(this.analyser);
-            this.analyser.smoothingTimeConstant = 0.5;
-            this.analyser.fftSize = 32;
-
-            this.initRenderLoop();
-          }
-
-          private initRenderLoop() {
-            if (!this.analyser) return;
-            
-            const frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
-
-            const renderFrame = () => {
-              if (!this.analyser) return;
-              this.analyser.getByteFrequencyData(frequencyData);
-              this.processFrame(frequencyData);
-              requestAnimationFrame(renderFrame);
-            };
-            
-            requestAnimationFrame(renderFrame);
-          }
-
-          public cleanup() {
-            if (this.stream) {
-              this.stream.getTracks().forEach(track => track.stop());
-            }
-            if (this.analyser) {
-              this.analyser.disconnect();
-            }
-          }
-        }
 
         visualizer = new AudioVisualizer(audioContext, processFrame, processError);
       } catch (error) {
