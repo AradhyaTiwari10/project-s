@@ -319,87 +319,102 @@ export const Room = ({
     }, [localVideoRef])
 
     return (
-        <div className="flex flex-col items-center gap-4 p-4 bg-gray-100 min-h-screen">
-            <div className="flex flex-col md:flex-row gap-4 w-full max-w-[824px]">
-                <div className="relative w-full md:w-1/2">
+        <div className="flex flex-col h-screen bg-gray-100">
+            {/* Top Section with Videos */}
+            <div className="flex flex-col md:flex-row gap-4 p-4 h-[70vh]">
+                <div className="relative w-full md:w-1/2 h-full">
                     <video 
                         autoPlay 
                         playsInline
                         muted
                         ref={localVideoRef}
-                        className="w-full h-[300px] rounded-lg bg-black object-cover"
+                        className="w-full h-full rounded-lg bg-black object-cover scale-x-[-1]"
                     />
                     <p className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded">
                         You ({name})
                     </p>
                 </div>
-                <div className="relative w-full md:w-1/2">
+                <div className="relative w-full md:w-1/2 h-full">
                     <video 
                         autoPlay 
                         playsInline
                         ref={remoteVideoRef}
-                        className="w-full h-[300px] rounded-lg bg-black object-cover"
+                        className="w-full h-full rounded-lg bg-black object-cover scale-x-[-1]"
                     />
                     <p className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded">
                         {strangerName}
                     </p>
                 </div>
             </div>
-            
-            <div className="flex gap-2 w-full max-w-[824px] justify-center">
-                <button 
-                    onClick={handleNext}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-                >
-                    Next
-                </button>
-                <button 
-                    onClick={handleExit}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-                >
-                    Exit
-                </button>
-            </div>
 
-            <div className="w-full max-w-[824px] bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="p-4 border-b">
-                    <h2 className="text-lg font-semibold">Chat</h2>
+            {/* Bottom Section with Controls and Chat */}
+            <div className="flex flex-col md:flex-row flex-1 min-h-0">
+                {/* Controls Section */}
+                <div className="flex flex-row gap-4 p-4 bg-white border-t md:w-1/2 h-[30vh] items-center justify-center">
+                    <button 
+                        onClick={handleNext}
+                        className="w-1/2 h-full relative inline-block text-xl font-bold uppercase tracking-wide text-white rounded-lg transition-all duration-700 ease-[cubic-bezier(.3,.7,.4,1)] active:translate-y-[6px] active:duration-34"
+                         style={{ 
+                            backgroundColor: '#5cb85c', // Green background
+                            padding: '12px 27px',
+                            boxShadow: '0 12px 0 0 #4cae4c', // Darker green shadow
+                          }}
+                    >
+                         <span className="relative block translate-y-[-6px] transition-transform duration-1000 ease-[cubic-bezier(.3,.7,.4,1)] active:translate-y-[-2px] active:duration-34">
+                           Next
+                         </span>
+                    </button>
+                    <button 
+                        onClick={handleExit}
+                         className="w-1/2 h-full relative inline-block text-xl font-bold uppercase tracking-wide text-white rounded-lg transition-all duration-700 ease-[cubic-bezier(.3,.7,.4,1)] active:translate-y-[6px] active:duration-34"
+                          style={{ 
+                            backgroundColor: '#d9534f', // Red background
+                            padding: '12px 27px',
+                            boxShadow: '0 12px 0 0 #d43f3a', // Darker red shadow
+                          }}
+                    >
+                         <span className="relative block translate-y-[-6px] transition-transform duration-1000 ease-[cubic-bezier(.3,.7,.4,1)] active:translate-y-[-2px] active:duration-34">
+                            Exit
+                         </span>
+                    </button>
                 </div>
-                <div 
-                    ref={chatContainerRef}
-                    className="h-[300px] p-4 overflow-y-auto flex flex-col gap-2"
-                >
-                    {messages.map((msg, i) => (
-                        <div key={i} className={`flex flex-col ${msg.fromMe ? 'items-end' : 'items-start'}`}>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-sm text-gray-500">
-                                    {msg.senderName}
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                    {msg.timestamp}
-                                </span>
+
+                {/* Chat Section */}
+                <div className="flex-1 min-h-0 flex flex-col bg-white border-t md:border-l">
+                    <div 
+                        ref={chatContainerRef}
+                        className="flex-1 p-4 overflow-y-auto flex flex-col gap-2"
+                    >
+                        {messages.map((msg, i) => (
+                            <div key={i} className={`flex flex-col ${msg.fromMe ? 'items-end' : 'items-start'}`}>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-sm text-gray-500">
+                                        {msg.senderName}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                        {msg.timestamp}
+                                    </span>
+                                </div>
+                                <div className={`max-w-[70%] px-3 py-2 rounded-lg ${
+                                    msg.fromMe ? 'bg-blue-500 text-white' : 'bg-gray-100'
+                                }`}>
+                                    {msg.text}
+                                </div>
                             </div>
-                            <div className={`max-w-[70%] px-3 py-2 rounded-lg ${
-                                msg.fromMe ? 'bg-blue-500 text-white' : 'bg-gray-100'
-                            }`}>
-                                {msg.text}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                <div className="p-4 border-t">
-                    <div className="flex gap-2">
+                        ))}
+                    </div>
+                    <div className="p-2 border-t bg-gray-100 flex items-center gap-2">
                         <input
                             type="text"
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                            placeholder="Type a message..."
+                            placeholder="Write a message..."
                             className="flex-1 px-3 py-2 border rounded focus:outline-none focus:border-blue-500"
                         />
                         <button 
                             onClick={sendMessage}
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition whitespace-nowrap"
+                            className="flex-shrink-0 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition whitespace-nowrap"
                         >
                             Send
                         </button>

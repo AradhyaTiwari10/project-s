@@ -1,0 +1,64 @@
+.main {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 60px;
+  font-family: sans-serif;
+  text-align: center;
+  color: #4f46e5;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+}
+
+.main > div {
+  display: inline-block;
+  width: 3px;
+  height: 40px;
+  margin: 0 2px;
+  background: currentColor;
+  transform: scaleY(0.5);
+  opacity: 0.25;
+  border-radius: 2px;
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+}
+
+.main.error {
+  color: #ef4444;
+  min-width: 20em;
+  max-width: 30em;
+  margin: 0 auto;
+  white-space: pre-line;
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5em;
+  height: 2em;
+  margin-left: -2.5em;
+  margin-top: -1em;
+  z-index: 100;
+  
+  padding: 0.25em 0.5em;
+  color: #000;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.15em;
+  font-weight: 200;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.5s;
+}
+
+.button:hover {
+  box-shadow: 0 0 30px 5px rgba(0, 0, 0, 0.75);
+} 
