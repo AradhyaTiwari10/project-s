@@ -1,6 +1,12 @@
 import { motion } from "motion/react";
+import { useEffect } from "react";
 
 export function LightPullThemeSwitcher() {
+    useEffect(() => {
+        const root = document.documentElement;
+        root.classList.add("dark");
+    }, []);
+
     const toggleDarkMode = () => {
         const root = document.documentElement;
         root.classList.toggle("dark");
