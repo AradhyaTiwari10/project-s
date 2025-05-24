@@ -100,4 +100,12 @@ export class RoomManager {
     generate() {
         return GLOBAL_ROOM_ID++;
     }
+
+    getRoomId(socketId: string): string | undefined {
+        return this.userToRoom.get(socketId);
+    }
+
+    getRoom(roomId: string): Room | undefined {
+        return this.rooms.get(roomId);
+    }
 }

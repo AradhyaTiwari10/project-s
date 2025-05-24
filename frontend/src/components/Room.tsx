@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Socket, io } from "socket.io-client";
 
-const URL = "https://project-s-production.up.railway.app/";
-// const URL = "http://localhost:3000/";
+// const URL = "https://project-s-production.up.railway.app/";
+const URL = "http://localhost:3000/";
 
 
 interface Message {
@@ -42,6 +42,23 @@ export const Room = ({
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
     }, [messages]);
+
+    // Add auto-next functionality during connecting phase
+    useEffect(() => {
+        let intervalId: number;
+        
+        if (lobby) {
+            intervalId = setInterval(() => {
+                handleNext();
+            }, 3000);
+        }
+
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [lobby, socket]);
 
     const formatTime = (date: Date) => {
         return date.toLocaleTimeString('en-US', { 
@@ -97,6 +114,22 @@ export const Room = ({
 
     useEffect(() => {
         const socket = io(URL);
+        
+        // Cleanup function to handle disconnection
+        const cleanup = () => {
+            if (socket) {
+                socket.disconnect();
+            }
+        };
+
+        socket.on('connect', () => {
+            console.log("Socket connected");
+        });
+
+        socket.on('disconnect', () => {
+            console.log("Socket disconnected");
+        });
+
         socket.on('send-offer', async ({roomId}) => {
             console.log("sending offer");
             setLobby(false);
@@ -307,7 +340,20 @@ export const Room = ({
         });
 
         setSocket(socket)
-    }, [name])
+
+        // Return cleanup function
+        return cleanup;
+    }, []); // Remove name dependency to prevent multiple connections
+
+    // Separate useEffect for sending name when socket is ready
+    useEffect(() => {
+        if (socket && !lobby) {
+            socket.emit("chat-message", { 
+                message: "", 
+                senderName: name 
+            });
+        }
+    }, [socket, lobby, name]);
 
     useEffect(() => {
         if (localVideoRef.current) {

@@ -75,9 +75,31 @@ export class UserManager {
         });
 
         socket.on("next-user", () => {
+            // First disconnect the current user
             this.roomManager.disconnectUser(socket.id);
-            this.queue.push(socket.id);
-            socket.emit("lobby");
+            
+            // Get the room ID before disconnecting
+            const roomId = this.roomManager.getRoomId(socket.id);
+            if (roomId) {
+                const room = this.roomManager.getRoom(roomId);
+                if (room) {
+                    // Also disconnect the other user in the room
+                    const otherUser = room.user1.socket.id === socket.id ? room.user2 : room.user1;
+                    this.roomManager.disconnectUser(otherUser.socket.id);
+                    // Add both users back to the queue
+                    this.queue.push(socket.id);
+                    this.queue.push(otherUser.socket.id);
+                    // Notify both users they're back in lobby
+                    socket.emit("lobby");
+                    otherUser.socket.emit("lobby");
+                }
+            } else {
+                // If no room found, just add this user back to queue
+                this.queue.push(socket.id);
+                socket.emit("lobby");
+            }
+            
+            // Clear the queue to potentially match users
             this.clearQueue();
         });
 
