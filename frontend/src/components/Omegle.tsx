@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react"
 import { Room } from "./Room";
-import { SignedIn, SignedOut, useAuth, useUser, useClerk, UserButton } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, useAuth, useUser, useClerk } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import MicVisualizer from "./MicVisualizer";
 import { InteractiveHoverButton } from "./ui/interactive-hover-button";
 import { useToast } from "./ui/use-toast";
 import { Toaster } from "./ui/toaster";
 import { ToastAction } from "./ui/toast";
+import { LightPullThemeSwitcher } from "./ui/light-pull-theme-switcher";
 
 export const Omegle = () => {
     const [name, setName] = useState("");
@@ -131,17 +132,20 @@ export const Omegle = () => {
         return (
             <SignedIn>
                 <Toaster />
-                <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
-                    <div className="absolute top-4 right-4 z-50">
-                        <UserButton afterSignOutUrl="/" />
+                <div className="min-h-screen flex flex-col md:flex-row bg-gray-50 dark:bg-gray-900 font-dm-sans">
+                    <div className="absolute top-0 right-4 z-50">
+                        <LightPullThemeSwitcher />
+                        <div className="absolute top-17 right-0">
+                            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 font-signika">Pull down to change theme</p>
+                        </div>
                     </div>
                     {/* Left Section: Info and Controls */}
                     <div className="w-full md:w-1/3 flex flex-col items-center justify-center p-8">
-                        <h1 className="text-4xl font-bold text-center mb-8">Omegle Uni Edition</h1>
-                        <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
-                             <h2 className="text-xl font-semibold mb-4">Enter your details</h2>
+                        <h1 className="text-4xl font-bold text-center mb-8 text-gray-900 dark:text-white">Omegle Uni Edition</h1>
+                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-sm">
+                             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Enter your details</h2>
                              <div className="mb-4">
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Name
                                 </label>
                                 <input 
@@ -150,19 +154,19 @@ export const Omegle = () => {
                                     placeholder="Enter your name"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                                 />
                              </div>
 
                             {/* Microphone Selection */}
                             {audioDevices.length > 0 && (
                                 <div className="mb-4">
-                                    <label htmlFor="audioDevice" className="block text-sm font-medium text-gray-700 mb-2">Select Microphone:</label>
+                                    <label htmlFor="audioDevice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Microphone:</label>
                                     <select
                                         id="audioDevice"
                                         value={selectedAudioDevice}
                                         onChange={(e) => setSelectedAudioDevice(e.target.value)}
-                                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white"
                                     >
                                         {audioDevices.map(device => (
                                             <option key={device.deviceId} value={device.deviceId}>
@@ -174,14 +178,14 @@ export const Omegle = () => {
                             )}
                             
                             {/* Microphone Visualizer */}
-                            <div className="mt-4 border rounded-lg overflow-hidden">
+                            <div className="mt-4 border dark:border-gray-600 rounded-lg overflow-hidden">
                                 <MicVisualizer />
                             </div>
                         </div>
                     </div>
                     {/* Right Section: Video and Join Button */}
                     <div className="w-full md:w-2/3 flex flex-col items-center justify-center p-4">
-                        <div className="w-full h-[60vh] md:h-[80vh] bg-black rounded-lg overflow-hidden shadow-lg">
+                        <div className="w-[80%] h-[60vh] md:h-[60vh] bg-black rounded-lg overflow-hidden shadow-lg">
                              <video autoPlay ref={videoRef} className="w-full h-full object-cover scale-x-[-1]"></video>
                         </div>
                         <div className="mt-8 flex justify-center">
@@ -199,9 +203,6 @@ export const Omegle = () => {
 
     return (
         <SignedIn>
-            <div className="absolute top-4 right-4 z-50">
-                <UserButton afterSignOutUrl="/" />
-            </div>
             <Room 
                 name={name} 
                 localAudioTrack={localAudioTrack} 

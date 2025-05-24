@@ -319,7 +319,7 @@ export const Room = ({
     }, [localVideoRef])
 
     return (
-        <div className="flex flex-col h-screen bg-gray-100">
+        <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
             {/* Top Section with Videos */}
             <div className="flex flex-col md:flex-row gap-4 p-4 h-[70vh]">
                 <div className="relative w-full md:w-1/2 h-full">
@@ -350,7 +350,7 @@ export const Room = ({
             {/* Bottom Section with Controls and Chat */}
             <div className="flex flex-col md:flex-row flex-1 min-h-0">
                 {/* Controls Section */}
-                <div className="flex flex-row gap-4 p-4 bg-white border-t md:w-1/2 h-[30vh] items-center justify-center">
+                <div className="flex flex-row gap-4 p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700 md:w-1/2 h-[30vh] items-center justify-center">
                     <button 
                         onClick={handleNext}
                         className="w-1/2 h-full relative inline-block text-xl font-bold uppercase tracking-wide text-white rounded-lg transition-all duration-700 ease-[cubic-bezier(.3,.7,.4,1)] active:translate-y-[6px] active:duration-34"
@@ -380,7 +380,7 @@ export const Room = ({
                 </div>
 
                 {/* Chat Section */}
-                <div className="flex-1 min-h-0 flex flex-col bg-white border-t md:border-l">
+                <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-gray-800 border-t dark:border-gray-700 md:border-l">
                     <div 
                         ref={chatContainerRef}
                         className="flex-1 p-4 overflow-y-auto flex flex-col gap-2"
@@ -388,29 +388,29 @@ export const Room = ({
                         {messages.map((msg, i) => (
                             <div key={i} className={`flex flex-col ${msg.fromMe ? 'items-end' : 'items-start'}`}>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-sm text-gray-500">
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
                                         {msg.senderName}
                                     </span>
-                                    <span className="text-xs text-gray-400">
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">
                                         {msg.timestamp}
                                     </span>
                                 </div>
                                 <div className={`max-w-[70%] px-3 py-2 rounded-lg ${
-                                    msg.fromMe ? 'bg-blue-500 text-white' : 'bg-gray-100'
+                                    msg.fromMe ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 dark:text-white'
                                 }`}>
                                     {msg.text}
                                 </div>
                             </div>
                         ))}
                     </div>
-                    <div className="p-2 border-t bg-gray-100 flex items-center gap-2">
+                    <div className="p-2 border-t dark:border-gray-700 bg-gray-100 dark:bg-gray-900 flex items-center gap-2">
                         <input
                             type="text"
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                             placeholder="Write a message..."
-                            className="flex-1 px-3 py-2 border rounded focus:outline-none focus:border-blue-500"
+                            className="flex-1 px-3 py-2 border dark:border-gray-600 rounded focus:outline-none focus:border-blue-500 dark:bg-gray-800 dark:text-white"
                         />
                         <button 
                             onClick={sendMessage}
