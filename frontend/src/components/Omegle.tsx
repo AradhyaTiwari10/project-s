@@ -8,6 +8,7 @@ import { useToast } from "./ui/use-toast";
 import { Toaster } from "./ui/toaster";
 import { ToastAction } from "./ui/toast";
 import { LightPullThemeSwitcher } from "./ui/light-pull-theme-switcher";
+import { UserButton } from "@clerk/clerk-react";
 
 export const Omegle = () => {
     const [name, setName] = useState("");
@@ -133,9 +134,12 @@ export const Omegle = () => {
             <SignedIn>
                 <Toaster />
                 <div className="min-h-screen flex flex-col md:flex-row bg-gray-50 dark:bg-gray-900 font-dm-sans">
+                    <div className="absolute top-0 left-4 z-50">
+                        <UserButton afterSignOutUrl="/" />
+                    </div>
                     <div className="absolute top-0 right-4 z-50">
                         <LightPullThemeSwitcher />
-                        <div className="absolute top-17 right-0">
+                        <div className="absolute top-32 right-0">
                             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 font-signika">Pull down to change theme</p>
                         </div>
                     </div>
