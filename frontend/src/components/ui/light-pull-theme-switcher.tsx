@@ -30,7 +30,8 @@ export function LightPullThemeSwitcher() {
                bg-[radial-gradient(circle_at_center,_#facc15,_#fcd34d,_#fef9c3)] 
                dark:bg-[radial-gradient(circle_at_center,_#4b5563,_#1f2937,_#000)] 
                shadow-[0_0_20px_8px_rgba(250,204,21,0.5)] 
-               dark:shadow-[0_0_20px_6px_rgba(31,41,55,0.7)]"
+               dark:shadow-[0_0_20px_6px_rgba(31,41,55,0.7)]
+               dark:ring-1 dark:ring-white/30"
         >
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-0.5 h-[9999px] bg-neutral-200 dark:bg-neutral-700"></div>
         </motion.div>
