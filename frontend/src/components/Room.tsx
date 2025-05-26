@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Socket, io } from "socket.io-client";
 
-const URL = "https://project-s-production.up.railway.app/";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://project-s-production.up.railway.app";
 // const URL = "http://localhost:3000/";
 
 
@@ -113,7 +113,13 @@ export const Room = ({
     };
 
     useEffect(() => {
-        const socket = io(URL);
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            timeout: 20000
+        });
         
         // Cleanup function to handle disconnection
         const cleanup = () => {
@@ -135,25 +141,32 @@ export const Room = ({
             setLobby(false);
             const pc = new RTCPeerConnection({
                 iceServers: [
-                  { urls: "stun:stun.l.google.com:19302" }, // Free public STUN server
-                  {
-                    urls: "turn:relay.metered.ca:80",
-                    username: "openai",
-                    credential: "openai"
-                  },
-                  {
-                    urls: "turn:relay.metered.ca:443",
-                    username: "openai",
-                    credential: "openai"
-                  },
-                  {
-                    urls: "turn:relay.metered.ca:443?transport=tcp",
-                    username: "openai",
-                    credential: "openai"
-                  }
-                ]
-              });
-              
+                    { urls: "stun:stun.l.google.com:19302" },
+                    { urls: "stun:stun1.l.google.com:19302" },
+                    { urls: "stun:stun2.l.google.com:19302" },
+                    { urls: "stun:stun3.l.google.com:19302" },
+                    { urls: "stun:stun4.l.google.com:19302" },
+                    {
+                        urls: "turn:relay.metered.ca:80",
+                        username: "openai",
+                        credential: "openai"
+                    },
+                    {
+                        urls: "turn:relay.metered.ca:443",
+                        username: "openai",
+                        credential: "openai"
+                    },
+                    {
+                        urls: "turn:relay.metered.ca:443?transport=tcp",
+                        username: "openai",
+                        credential: "openai"
+                    }
+                ],
+                iceCandidatePoolSize: 10,
+                bundlePolicy: "max-bundle",
+                rtcpMuxPolicy: "require"
+            });
+            
 
             setSendingPc(pc);
             if (localVideoTrack) {
@@ -343,7 +356,7 @@ export const Room = ({
 
         // Return cleanup function
         return cleanup;
-    }, []); // Remove name dependency to prevent multiple connections
+    }, [name, localAudioTrack, localVideoTrack]);
 
     // Separate useEffect for sending name when socket is ready
     useEffect(() => {
