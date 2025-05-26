@@ -166,18 +166,17 @@ export const Room = ({
                 bundlePolicy: "max-bundle",
                 rtcpMuxPolicy: "require"
             });
-            
 
             setSendingPc(pc);
+
+            // Add local tracks to the peer connection
             if (localVideoTrack) {
-                console.error("added tack");
-                console.log(localVideoTrack)
-                pc.addTrack(localVideoTrack)
+                console.log("Adding local video track");
+                pc.addTrack(localVideoTrack);
             }
             if (localAudioTrack) {
-                console.error("added tack");
-                console.log(localAudioTrack)
-                pc.addTrack(localAudioTrack)
+                console.log("Adding local audio track");
+                pc.addTrack(localAudioTrack);
             }
 
             // Send our name immediately when connection starts
@@ -187,26 +186,29 @@ export const Room = ({
             });
 
             pc.onicecandidate = async (e) => {
-                console.log("receiving ice candidate locally");
+                console.log("Sending ICE candidate");
                 if (e.candidate) {
-                   socket.emit("add-ice-candidate", {
-                    candidate: e.candidate,
-                    type: "sender",
-                    roomId
-                   })
+                    socket.emit("add-ice-candidate", {
+                        candidate: e.candidate,
+                        type: "sender",
+                        roomId
+                    });
                 }
-            }
+            };
 
             pc.onnegotiationneeded = async () => {
-                console.log("on negotiation neeeded, sending offer");
-                const sdp = await pc.createOffer();
-                //@ts-ignore
-                pc.setLocalDescription(sdp)
-                socket.emit("offer", {
-                    sdp,
-                    roomId
-                })
-            }
+                console.log("Creating and sending offer");
+                try {
+                    const sdp = await pc.createOffer();
+                    await pc.setLocalDescription(sdp);
+                    socket.emit("offer", {
+                        sdp,
+                        roomId
+                    });
+                } catch (error) {
+                    console.error("Error during negotiation:", error);
+                }
+            };
         });
 
         socket.on("offer", async ({roomId, sdp: remoteSdp}) => {
@@ -214,29 +216,37 @@ export const Room = ({
             setLobby(false);
             const pc = new RTCPeerConnection({
                 iceServers: [
-                  { urls: "stun:stun.l.google.com:19302" }, // Free public STUN server
-                  {
-                    urls: "turn:relay.metered.ca:80",
-                    username: "openai",
-                    credential: "openai"
-                  },
-                  {
-                    urls: "turn:relay.metered.ca:443",
-                    username: "openai",
-                    credential: "openai"
-                  },
-                  {
-                    urls: "turn:relay.metered.ca:443?transport=tcp",
-                    username: "openai",
-                    credential: "openai"
-                  }
-                ]
-              });
+                    { urls: "stun:stun.l.google.com:19302" },
+                    { urls: "stun:stun1.l.google.com:19302" },
+                    { urls: "stun:stun2.l.google.com:19302" },
+                    { urls: "stun:stun3.l.google.com:19302" },
+                    { urls: "stun:stun4.l.google.com:19302" },
+                    {
+                        urls: "turn:relay.metered.ca:80",
+                        username: "openai",
+                        credential: "openai"
+                    },
+                    {
+                        urls: "turn:relay.metered.ca:443",
+                        username: "openai",
+                        credential: "openai"
+                    },
+                    {
+                        urls: "turn:relay.metered.ca:443?transport=tcp",
+                        username: "openai",
+                        credential: "openai"
+                    }
+                ],
+                iceCandidatePoolSize: 10,
+                bundlePolicy: "max-bundle",
+                rtcpMuxPolicy: "require"
+            });
               
-            await pc.setRemoteDescription(remoteSdp)
+            await pc.setRemoteDescription(remoteSdp);
             const sdp = await pc.createAnswer();
-            //@ts-ignore
-            await pc.setLocalDescription(sdp)
+            await pc.setLocalDescription(sdp);
+
+            // Create a new MediaStream for remote tracks
             const stream = new MediaStream();
             if (remoteVideoRef.current) {
                 remoteVideoRef.current.srcObject = stream;
@@ -250,48 +260,40 @@ export const Room = ({
 
             setRemoteMediaStream(stream);
             setReceivingPc(pc);
-            // @ts-ignore
-            window.pcr = pc;
-            pc.ontrack = (e) => {
-                alert("ontrack");
-            }
+
+            // Handle incoming tracks
+            pc.ontrack = (event) => {
+                console.log("Received track:", event.track.kind);
+                if (event.streams && event.streams[0]) {
+                    if (remoteVideoRef.current) {
+                        remoteVideoRef.current.srcObject = event.streams[0];
+                    }
+                }
+                
+                // Store tracks for cleanup
+                if (event.track.kind === 'video') {
+                    setRemoteVideoTrack(event.track);
+                } else if (event.track.kind === 'audio') {
+                    setRemoteAudioTrack(event.track);
+                }
+            };
 
             pc.onicecandidate = async (e) => {
                 if (!e.candidate) {
                     return;
                 }
-                console.log("omn ice candidate on receiving seide");
-                if (e.candidate) {
-                   socket.emit("add-ice-candidate", {
+                console.log("on ice candidate on receiving side");
+                socket.emit("add-ice-candidate", {
                     candidate: e.candidate,
                     type: "receiver",
                     roomId
-                   })
-                }
-            }
+                });
+            };
 
             socket.emit("answer", {
                 roomId,
                 sdp: sdp
             });
-            setTimeout( () => {
-                const track1 =   pc.getTransceivers()[0].receiver.track
-                const track2 = pc.getTransceivers()[1].receiver.track
-                console.log(track1);
-                if (track1.kind === "video") {
-                    setRemoteAudioTrack(track2)
-                    setRemoteVideoTrack(track1)
-                } else {
-                    setRemoteAudioTrack(track1)
-                    setRemoteVideoTrack(track2)
-                }
-                //@ts-ignore
-                remoteVideoRef.current.srcObject.addTrack(track1)
-                //@ts-ignore
-                remoteVideoRef.current.srcObject.addTrack(track2)
-                //@ts-ignore
-                remoteVideoRef.current.play();
-            }, 5000)
         });
 
         socket.on("answer", ({roomId, sdp: remoteSdp}) => {
@@ -399,6 +401,11 @@ export const Room = ({
                         playsInline
                         ref={remoteVideoRef}
                         className="w-full h-full rounded-lg bg-black object-cover scale-x-[-1]"
+                        onLoadedMetadata={() => {
+                            if (remoteVideoRef.current) {
+                                remoteVideoRef.current.play().catch(console.error);
+                            }
+                        }}
                     />
                     <p className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded">
                         {strangerName}
