@@ -275,7 +275,6 @@ export const Room = ({
                     senderName: name
                 });
 
-                setRemoteMediaStream(stream);
                 setReceivingPc(pc);
 
                 // Handle incoming tracks
