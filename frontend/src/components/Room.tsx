@@ -169,6 +169,12 @@ export const Room = ({
 
             setSendingPc(pc);
 
+            // Add listeners for sendingPc
+            pc.onconnectionstatechange = () => console.log("SendingPC: Connection state change:", pc.connectionState);
+            pc.oniceconnectionstatechange = () => console.log("SendingPC: ICE connection state change:", pc.iceConnectionState);
+            pc.onicegatheringstatechange = () => console.log("SendingPC: ICE gathering state change:", pc.iceGatheringState);
+            pc.onsignalingstatechange = () => console.log("SendingPC: Signaling state change:", pc.signalingState);
+
             // Add local tracks to the peer connection
             if (localVideoTrack) {
                 console.log("Adding local video track");
@@ -186,7 +192,7 @@ export const Room = ({
             });
 
             pc.onicecandidate = async (e) => {
-                console.log("Sending ICE candidate");
+                console.log("SendingPC: onicecandidate event", e.candidate);
                 if (e.candidate) {
                     socket.emit("add-ice-candidate", {
                         candidate: e.candidate,
@@ -197,22 +203,23 @@ export const Room = ({
             };
 
             pc.onnegotiationneeded = async () => {
-                console.log("Creating and sending offer");
+                console.log("SendingPC: onnegotiationneeded");
                 try {
                     const sdp = await pc.createOffer();
                     await pc.setLocalDescription(sdp);
+                    console.log("SendingPC: Offer created and local description set", sdp);
                     socket.emit("offer", {
                         sdp,
                         roomId
                     });
                 } catch (error) {
-                    console.error("Error during negotiation:", error);
+                    console.error("SendingPC: Error during createOffer/setLocalDescription:", error);
                 }
             };
         });
 
         socket.on("offer", async ({roomId, sdp: remoteSdp}) => {
-            console.log("received offer");
+            console.log("Received offer for room:", roomId);
             setLobby(false);
             const pc = new RTCPeerConnection({
                 iceServers: [
@@ -241,68 +248,90 @@ export const Room = ({
                 bundlePolicy: "max-bundle",
                 rtcpMuxPolicy: "require"
             });
+
+            // Add listeners for receivingPc
+            pc.onconnectionstatechange = () => console.log("ReceivingPC: Connection state change:", pc.connectionState);
+            pc.oniceconnectionstatechange = () => console.log("ReceivingPC: ICE connection state change:", pc.iceConnectionState);
+            pc.onicegatheringstatechange = () => console.log("ReceivingPC: ICE gathering state change:", pc.iceGatheringState);
+            pc.onsignalingstatechange = () => console.log("ReceivingPC: Signaling state change:", pc.signalingState);
               
-            await pc.setRemoteDescription(remoteSdp);
-            const sdp = await pc.createAnswer();
-            await pc.setLocalDescription(sdp);
+            try {
+                await pc.setRemoteDescription(remoteSdp);
+                console.log("ReceivingPC: Remote description (offer) set", remoteSdp);
+                const sdp = await pc.createAnswer();
+                await pc.setLocalDescription(sdp);
+                console.log("ReceivingPC: Answer created and local description set", sdp);
 
-            // Create a new MediaStream for remote tracks
-            const stream = new MediaStream();
-            if (remoteVideoRef.current) {
-                remoteVideoRef.current.srcObject = stream;
-            }
-
-            // Send our name immediately when connection starts
-            socket.emit("chat-message", { 
-                message: "", 
-                senderName: name 
-            });
-
-            setRemoteMediaStream(stream);
-            setReceivingPc(pc);
-
-            // Handle incoming tracks
-            pc.ontrack = (event) => {
-                console.log("Received track:", event.track.kind);
-                if (event.streams && event.streams[0]) {
-                    if (remoteVideoRef.current) {
-                        remoteVideoRef.current.srcObject = event.streams[0];
-                    }
+                // Create a new MediaStream for remote tracks
+                const currentRemoteStream = new MediaStream();
+                if (remoteVideoRef.current) {
+                    remoteVideoRef.current.srcObject = currentRemoteStream;
                 }
-                
-                // Store tracks for cleanup
-                if (event.track.kind === 'video') {
-                    setRemoteVideoTrack(event.track);
-                } else if (event.track.kind === 'audio') {
-                    setRemoteAudioTrack(event.track);
-                }
-            };
+                setRemoteMediaStream(currentRemoteStream); // So it can be cleaned up
 
-            pc.onicecandidate = async (e) => {
-                if (!e.candidate) {
-                    return;
-                }
-                console.log("on ice candidate on receiving side");
-                socket.emit("add-ice-candidate", {
-                    candidate: e.candidate,
-                    type: "receiver",
-                    roomId
+                // Send our name immediately when connection starts
+                socket.emit("chat-message", {
+                    message: "",
+                    senderName: name
                 });
-            };
 
-            socket.emit("answer", {
-                roomId,
-                sdp: sdp
-            });
+                setRemoteMediaStream(stream);
+                setReceivingPc(pc);
+
+                // Handle incoming tracks
+                pc.ontrack = (event) => {
+                    console.log("ReceivingPC: ontrack event", event);
+                    console.log(`ReceivingPC: Track kind: ${event.track.kind}, id: ${event.track.id}, streams:`, event.streams);
+                    if (currentRemoteStream) {
+                        currentRemoteStream.addTrack(event.track);
+                    }
+
+                    // Attempt to play video when track is received
+                    if (event.track.kind === 'video' && remoteVideoRef.current && remoteVideoRef.current.paused) {
+                        remoteVideoRef.current.play().catch(error => console.error("Remote video play failed:", error));
+                    }
+
+                    // Store tracks for cleanup (optional, as stream itself is stored)
+                    if (event.track.kind === 'video') {
+                        setRemoteVideoTrack(event.track);
+                    } else if (event.track.kind === 'audio') {
+                        setRemoteAudioTrack(event.track);
+                    }
+                };
+
+                pc.onicecandidate = async (e) => {
+                    console.log("ReceivingPC: onicecandidate event", e.candidate);
+                    if (!e.candidate) {
+                        return;
+                    }
+                    socket.emit("add-ice-candidate", {
+                        candidate: e.candidate,
+                        type: "receiver",
+                        roomId
+                    });
+                };
+
+                socket.emit("answer", {
+                    roomId,
+                    sdp: sdp
+                });
+            } catch (error) {
+                console.error("ReceivingPC: Error during setRemoteDescription/createAnswer/setLocalDescription:", error);
+            }
         });
 
-        socket.on("answer", ({roomId, sdp: remoteSdp}) => {
+        socket.on("answer", async ({roomId, sdp: remoteSdp}) => {
+            console.log("Received answer for room:", roomId);
             setLobby(false);
             setSendingPc(pc => {
-                pc?.setRemoteDescription(remoteSdp)
+                if (pc) {
+                    pc.setRemoteDescription(remoteSdp)
+                        .then(() => console.log("SendingPC: Remote description (answer) set", remoteSdp))
+                        .catch(e => console.error("SendingPC: Error setting remote description (answer):", e));
+                }
                 return pc;
             });
-            console.log("loop closed");
+            console.log("SendingPC: WebRTC negotiation loop closed");
         })
 
         socket.on("lobby", () => {
@@ -311,25 +340,27 @@ export const Room = ({
         })
 
         socket.on("add-ice-candidate", ({candidate, type}) => {
-            console.log("add ice candidate from remote");
-            console.log({candidate, type})
-            if (type == "sender") {
+            console.log(`Received ICE candidate from remote for ${type} PC:`, candidate);
+            if (type === "sender") {
                 setReceivingPc(pc => {
                     if (!pc) {
-                        console.error("receicng pc nout found")
+                        console.error("ReceivingPC not found when trying to add ICE candidate");
                     } else {
-                        console.error(pc.ontrack)
+                        pc.addIceCandidate(candidate)
+                            .then(() => console.log("ReceivingPC: Added ICE candidate successfully"))
+                            .catch(e => console.error("ReceivingPC: Error adding ICE candidate:", e));
                     }
-                    pc?.addIceCandidate(candidate)
                     return pc;
                 });
             } else {
                 setSendingPc(pc => {
                     if (!pc) {
-                        console.error("sending pc nout found")
+                        console.error("SendingPC not found when trying to add ICE candidate");
                     } else {
+                        pc.addIceCandidate(candidate)
+                            .then(() => console.log("SendingPC: Added ICE candidate successfully"))
+                            .catch(e => console.error("SendingPC: Error adding ICE candidate:", e));
                     }
-                    pc?.addIceCandidate(candidate)
                     return pc;
                 });
             }
@@ -374,10 +405,12 @@ export const Room = ({
         if (localVideoRef.current) {
             if (localVideoTrack) {
                 localVideoRef.current.srcObject = new MediaStream([localVideoTrack]);
-                localVideoRef.current.play();
+                localVideoRef.current.play().catch(error => console.error("Local video play failed:", error));
+            } else {
+                localVideoRef.current.srcObject = null;
             }
         }
-    }, [localVideoRef])
+    }, [localVideoRef, localVideoTrack])
 
     return (
         <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
